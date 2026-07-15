@@ -880,7 +880,21 @@ function UnionOfRows(R, nr_cols, list)::TypeOfMatrixForHomalg
         return HomalgZeroMatrix(0, nr_cols, R)
     end
 
-    return vcat(list...)
+    if list[1] isa Nemo.MatrixElem
+        return vcat(list...)
+    end
+
+    # Fallback for matrix types that don't support vcat (e.g. Singular.smatrix)
+    total_rows = sum(nrows(m) for m in list)
+    result = Nemo.zero_matrix(R, total_rows, nr_cols)
+    row = 0
+    for m in list
+        for i in 1:nrows(m), j in 1:nr_cols
+            result[row + i, j] = m[i, j]
+        end
+        row += nrows(m)
+    end
+    return result
 end
 
 """
@@ -907,7 +921,21 @@ function UnionOfColumns(R, nr_rows, list)::TypeOfMatrixForHomalg
         return HomalgZeroMatrix(nr_rows, 0, R)
     end
 
-    return hcat(list...)
+    if list[1] isa Nemo.MatrixElem
+        return hcat(list...)
+    end
+
+    # Fallback for matrix types that don't support hcat (e.g. Singular.smatrix)
+    total_cols = sum(ncols(m) for m in list)
+    result = Nemo.zero_matrix(R, nr_rows, total_cols)
+    col = 0
+    for m in list
+        for i in 1:nr_rows, j in 1:ncols(m)
+            result[i, col + j] = m[i, j]
+        end
+        col += ncols(m)
+    end
+    return result
 end
 
 """
